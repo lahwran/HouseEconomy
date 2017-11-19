@@ -1,5 +1,16 @@
 import React, { Component } from 'react';
 import { FlatList, ViewPagerAndroid, ScrollView, Alert, Button, AppRegistry, Image, StyleSheet, Text, View, TextInput } from 'react-native';
+import * as firebase from 'firebase';
+
+var config = {
+    apiKey: "AIzaSyAXB9xiGvk8W1XhPEYnuXgvMmZKhi4FYds",
+    authDomain: "economics-6ac47.firebaseapp.com",
+    databaseURL: "https://economics-6ac47.firebaseio.com",
+    projectId: "economics-6ac47",
+    storageBucket: "economics-6ac47.appspot.com",
+    messagingSenderId: "159174043435"
+};
+firebase.initializeApp(config);
 
 class Greeting extends Component {
     render() {
