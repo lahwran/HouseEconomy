@@ -2,6 +2,8 @@ import React, { Component } from 'react';
 import { FlatList, ViewPagerAndroid, ScrollView, Alert, Button, AppRegistry, Image, StyleSheet, Text, View, TextInput } from 'react-native';
 import * as firebase from 'firebase';
 
+console.ignoredYellowBox = ['Setting a timer'];
+
 var config = {
     apiKey: "AIzaSyAXB9xiGvk8W1XhPEYnuXgvMmZKhi4FYds",
     authDomain: "economics-6ac47.firebaseapp.com",
@@ -99,7 +101,7 @@ class IScrolledDownAndWhatHappenedNextShockedMe extends Component {
     }
 }
 
-export default class HelloWorldApp extends React.Component {
+class HelloWorldApp extends React.Component {
     render() {
         let pic = {
             uri: 'https://upload.wikimedia.org/wikipedia/commons/d/de/Bananavarieties.jpg'
@@ -152,7 +154,178 @@ export default class HelloWorldApp extends React.Component {
     }
 }
 
+class Thingy extends React.Component {
+    render() {
+        return (
+            <Text> {this.props.item.title} (by {this.props.item.user}) </Text>
+        );
+    }
+}
+// 1. (install npm)
+// 2. npm install create-react-native-app
+// 3. npm install yarn
+// 4. create-react-native-app ReactTutorial
+// 5. cd ReactTutorial
+// 6. yarn add firebase
+
+class SimpleFirebaseApp extends React.Component {
+    constructor() {
+        super();
+        this.state = {
+            currentItem: '',
+            username: '',
+            items: []
+        };
+    }
+    submit() {
+        const itemsref = firebase.database().ref('items');
+        const item = {
+            title: this.state.currentItem,
+            user: this.state.username
+        };
+        itemsref.push(item);
+        this.setState({
+            currentItem: '',
+            username: ''
+        });
+    }
+    componentDidMount() {
+        const itemsref = firebase.database().ref('items');
+        itemsref.on('value', (snapshot) => {
+            let items = snapshot.val();
+            let newstate = [];
+            for (let item in items) {
+                newstate.push({
+                    key: item,
+                    title: items[item].title,
+                    user: items[item].user
+                })
+            }
+            this.setState({
+                items: newstate
+            });
+        });
+    }
+    render() {
+        return (
+            <View style={styles.page}>
+                <View>
+                    <FlatList
+                        data={this.state.items}
+                        renderItem={({item}) => <Thingy item={item}/>}/>
+                </View>
+                <TextInput
+                    style={{height: 40}}
+                    placeholder="Thing to enter"
+                    onChangeText={(text) => this.setState({currentItem: text})}
+                    value={this.state.currentItem}
+                />
+                <TextInput
+                    style={{height: 40}}
+                    placeholder="Username"
+                    onChangeText={(text) => this.setState({username: text})}
+                    value={this.state.username}
+                />
+                <Button onPress={() => { this.submit() }}
+                    title="Press me"/>
+
+            </View>
+        );
+    }
+}
+
+class SigninPage extends React.Component {
+    constructor() {
+        super();
+        this.state = {
+            email: '',
+            password: ''
+        };
+    }
+    signUp(username, password) {
+        firebase.auth().createUserWithEmailAndPassword(username, password).catch(function(error) {
+            if (error.code == 'auth/weak-password') {
+                Alert.alert('Password is too weak.');
+            } else if (error.code == 'auth/email-already-in-use') {
+                Alert.alert('Email already in use. Hit ok to try logging in...');
+                this.signIn(username, password);
+            } else {
+                Alert.alert(`seriously unexpected thingy: ${error.code}: ${error.message}`);
+            }
+        });
+    }
+    signIn(username, password) {
+        firebase.auth().signInWithEmailAndPassword(username, password).catch(function(error) {
+            if (error.code == 'auth/wrong-password') {
+                Alert.alert('Wrong password.');
+            } else {
+                Alert.alert(`seriously unexpected thingy: ${error.code}: ${error.message}`);
+            }
+        });
+        
+    }
+    submit() {
+        this.signUp(this.state.email, this.state.password);
+    }
+    render() {
+        return (<View style={styles.page}>
+            <TextInput
+                style={{height: 40}}
+                placeholder="Email"
+                onChangeText={(text) => this.setState({email: text})}
+                autoCapitalize="none"
+                keyboardType="email-address"
+                returnKeyType="next"
+                value={this.state.email}
+            />
+            <TextInput
+                style={{height: 40}}
+                placeholder="Password"
+                autoCapitalize="none"
+                secureTextEntry={true}
+                onChangeText={(text) => this.setState({password: text})}
+                value={this.state.password}
+            />
+            <Button onPress={() => { this.submit() }}
+                title="Log In"/>
+        </View>);
+    }
+}
+
+export default class App extends React.Component {
+    constructor() {
+        super();
+        this.state = {
+            loggedin: true
+        };
+    }
+    componentDidMount() {
+        firebase.auth().onAuthStateChanged((user) => {
+            var userjson = JSON.stringify(user);
+            this.setState({
+                loggedin: !!user
+            });
+            //if (user) {
+
+            //} else {
+            //    // No user is signed in.
+            //}
+        });
+    }
+    render() {
+        if (this.state.loggedin) {
+            return (<View style={styles.page}>
+                <Text>Logged in.</Text>
+            </View>);
+        } else {
+            return <SigninPage/>;
+        }
+    }
+}
+
 const styles = StyleSheet.create({
+    page: {flex: 1, paddingTop: 40, padding: 20},
+    inner: {},
     bigblue: {
         color: 'blue',
         fontWeight: 'bold',
